@@ -1,0 +1,59 @@
+### Title: feat: Add JSON preprocessor and evaluation runner
+
+### Summary
+
+This pull request introduces a new, configuration-driven workflow for processing raw JSON outputs from Survey Assist, preparing the data for analysis, and running evaluation metrics.
+
+### Background & Motivation
+
+Currently, there is no standardised method for processing the JSON files produced by batch runs of Survey Assist. This makes it difficult to consistently evaluate the performance of different models or prompts.
+
+This change introduces a repeatable pipeline to solve this problem. It consists of two new classes, `JsonPreprocessor` and `Assessor`, and a runner script (`run_json_processor.py`) that orchestrates the end-to-end process. This allows for a configurable and consistent way to flatten raw model outputs, merge them with human-coded ground truth data, and generate initial summary statistics.
+
+### Changes Introduced
+
+1.  **`JsonPreprocessor` Class:** A new class responsible for fetching and processing raw JSON files directly from Google Cloud Storage (GCS). It can operate in two modes: processing a single specified file, or scanning a directory for all files created after a certain date.
+2.  **`Assessor` Class:** A new, simple class that calculates high-level summary statistics on a dataset that has already been processed and flagged (e.g., by `prepare_evaluation_data_for_analysis.py`).
+3.  **Runner Script (`run_json_processor.py`):** A Jupyter Notebook (in `.py` format) that uses a `.toml` configuration file to manage the entire workflow, from fetching data to producing final metrics.
+
+### How the `prepare_config.toml` Works
+
+The entire process is controlled by the `prepare_config.toml` file, which is broken down into two main sections:
+
+#### `[paths]`
+
+This section defines all the input and output locations in GCS.
+
+* `batch_filepath`: The location of the original, human-coded input data.
+* `gcs_bucket_name`: The name of the GCS bucket where data is stored.
+* `gcs_json_dir`: The directory within the bucket where the raw JSON output files from model runs are located.
+* `analysis_csv`: The location of the human-coded data after it has been enriched with quality flags by the `prepare_evaluation_data_for_analysis.py` script.
+* `named_file`: The full GCS path to a *single* JSON output file to be processed. This is only used if `single_file` is set to `"True"`.
+* `merged_file_list`: A list of pre-processed CSV files that can be run through the final evaluation metrics.
+
+#### `[parameters]`
+
+This section controls the behaviour of the `JsonPreprocessor`.
+
+* `single_file`: If set to `"True"`, the processor will only use the file specified in `named_file`. If set to `"False"` or omitted, it will scan the `gcs_json_dir` directory.
+* `date_since`: When `single_file` is false, this tells the processor to only consider files in the directory created on or after this date (in `YYYYMMDD` format).
+
+### Prerequisites & How to Run
+
+1.  **Authenticate with Google Cloud:**
+    ```
+    gcloud auth application-default login
+    ```
+2.  **Update the Configuration:**
+    Open `notebooks/prepare_config.toml` and replace the placeholder `<my-butket-name>` with the correct GCS bucket name. Configure the file paths and parameters as required for your run.
+3.  **Convert and Run the Notebook:**
+    The runner script is a Jupytext file. To run it, first convert it to a `.ipynb` notebook:
+    ```
+    jupytext --to ipynb notebooks/run_json_processor.py
+    ```
+    Then, open and run the newly created `run_json_processor.ipynb` in Jupyter.
+
+### How to Test
+
+**Unit Tests:**
+Unit tests for the new classes can be run using pytest:
