@@ -1,0 +1,28 @@
+# Configuration for an experiment run.
+
+[metadata]
+experiment_label = "Prompt-Comparison-July-24"
+date_run = "2025-07-24"
+description = "Comparing the baseline prompt against a new prompt with added context."
+
+[paths]
+# Input file containing the human-coded data.
+input_data_csv = "gs://<my-bucket-name>/evaluation_data/DSC_Rep_Sample.csv"
+
+# Directory where the output Parquet file and config copy will be saved.
+output_directory = "gs://<my-bucket-name>/experiment_results/"
+
+[settings]
+# The execution mode. Can be "api" or "local".
+execution_mode = "api"
+
+# --- List of Prompts to Test ---
+# The orchestrator will run the entire dataset against each prompt listed here.
+[[prompts]]
+name = "Baseline-Prompt-V1"
+template = "Based on the following job description, what is the SIC code?"
+
+[[prompts]]
+name = "Context-Enhanced-Prompt-V2"
+template = "You are an expert economic classifier. Based on the following job title, industry, and description, what is the most likely 5-digit UK SIC code? Provide your reasoning."
+
