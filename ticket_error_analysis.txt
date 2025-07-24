@@ -1,0 +1,84 @@
+Ticket: SA-241 - Error Analysis of Initial Model Run to Drive Prompt Improvements
+
+Background
+
+The initial experiment run, managed by the ExperimentOrchestrator, has been completed. The output Parquet file contains the structured results from running our baseline dataset against different prompts and models (Gemini 1.5 Flash and Gemini 2.0 Flash).
+
+We now have a rich dataset that includes the input payload, the human-coded ground truth, and the AI's response for each case. The next step is to perform a detailed error analysis on these results to generate data-driven hypotheses for improving system performance.
+
+Goal
+
+To systematically analyse the classification errors from the initial experiment run to:
+
+    Identify and categorise recurring error patterns.
+
+    Formulate specific, actionable hypotheses for improving the prompt templates.
+
+    Gather evidence to guide potential improvements to the RAG/vector store.
+
+    Compare the error profiles of the different models tested.
+
+Tasks
+1. Identify Systematic Classification Errors
+
+The first step is to understand the types of mistakes the model is making.
+
+    1a. Filter for Errors: Filter the results DataFrame to create a subset of records where the top-ranked AI SIC code does not match any of the initial_human_codes.
+
+    1b. Manual Review & Categorisation: Manually review a statistically significant sample (e.g., 100-200) of these errors and categorise them. Look for recurring themes, such as:
+
+        Job Role vs. Industry Confusion: For example, is a "lorry driver for an animal feed business" being wrongly classified under transportation (Section H) instead of wholesale trade (Section G)?
+
+        Wholesale vs. Retail Confusion: Are businesses that sell to both the public and other businesses being consistently misclassified?
+
+        Specificity Errors: Does the model correctly identify the 2-digit Division but fail at the 5-digit sub-class?
+
+    1c. Verify Payload Integrity: For a sample of the most critical errors, check the initial_llm_payload column to confirm that the model received the correct and complete information. This will help rule out any issues with the data delivery pipeline.
+
+2. Investigate Potential for RAG/Vector Store Improvement
+
+This task focuses on finding evidence that might suggest weaknesses in the information retrieval part of our system.
+
+    2a. Analyse "Near Miss" Errors: Filter for cases where the correct human code was present in the AI's list of sic_candidates but was not the top-ranked choice. A high number of these "near misses" could suggest that the RAG system is successfully finding the relevant context, but the LLM needs a better prompt to help it make the final distinction.
+
+    2b. Review AI Reasoning: If the ai_response contains a "reasoning" field, analyse the text for patterns. Look for phrases that indicate uncertainty or a lack of specific information (e.g., "Based on the limited information..."). This could be evidence that the context retrieved by the RAG system was too generic and could be improved by adding more detailed descriptions to the vector store.
+
+3. Compare Model Performance (Gemini 1.5 vs. 2.0 Flash)
+
+We need to determine if the error patterns are consistent across different models.
+
+    3a. Segment by Model: Create two separate error DataFrames by filtering the main results on the prompt_name (assuming different prompts were used for each model, or add a model_name field to the orchestrator).
+
+    3b. Compare Error Categories: Compare the distribution of error categories (from Task 1) between the two models. For example, does Gemini 2.0 Flash struggle less with the "Job Role vs. Industry" problem than 1.5 Flash? This will help us understand if our issues are primarily with the prompt or with the model's underlying capabilities.
+
+4. Develop an Automated Metric for Error Severity
+
+A simple "correct/incorrect" flag is not very descriptive. We need a metric that tells us how wrong an incorrect prediction is.
+
+    4a. Implement a "Hierarchy Mismatch Score": Create a function that takes a predicted SIC code and a true SIC code and calculates their distance within the SIC hierarchy. The score could be:
+
+        0: Perfect 5-digit match.
+
+        1: Match at the 4-digit level (Class) but not 5-digit.
+
+        2: Match at the 3-digit level (Group) but not 4-digit.
+
+        3: Match at the 2-digit level (Division) but not 3-digit.
+
+        4: Match only at the 1-digit level (Section).
+
+        5: No match at any level.
+
+    4b. Apply the Metric: Run this function on our error dataset. A high average mismatch score would indicate that the model is making fundamental errors, whereas a low average score would suggest it's struggling with fine-grained distinctions.
+
+Acceptance Criteria
+
+    A summary report is produced detailing the top 3-5 systematic error patterns found in the initial run.
+
+    A list of at least three specific, data-driven hypotheses for prompt improvements is generated.
+
+    A recommendation is made on whether the RAG/vector store needs further investigation, supported by evidence from the "near miss" and "reasoning" analysis.
+
+    A comparative analysis of the error types between Gemini 1.5 and 2.0 is documented.
+
+    The "Hierarchy Mismatch Score" is implemented and the average score for the error set is calculated and reported.
