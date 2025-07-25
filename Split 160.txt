@@ -1,0 +1,64 @@
+Plan to Break Down Ticket SA-160
+
+This plan divides the work for the JsonPreprocessor into three sequential pull requests (PRs). Each PR will deliver a self-contained piece of functionality with its own unit tests, making them small and easy to review.
+Part 1: Core JSON Flattening Logic
+
+Goal: Create the core, reusable function that can take a raw JSON output from the Survey Assist model and transform it into a structured pandas DataFrame. This part will completely ignore where the file comes from.
+
+Scope:
+
+    Implement the flatten_llm_json_to_dataframe method.
+
+    This method will take a Python dictionary (the loaded JSON data) as input.
+
+    It will handle the logic for extracting the top-level fields, the request payload, and the nested sic_candidates.
+
+Acceptance Criteria:
+
+    A new function exists that reliably flattens a single JSON record into a DataFrame.
+
+    Unit tests are created that pass in various mock JSON objects and verify that the output DataFrame has the correct columns and data.
+
+    This PR will not include any GCS-related code.
+
+Part 2: Merging with Human-Coded Data
+
+Goal: Implement the logic to merge the newly flattened DataFrame from Part 1 with the existing human-coded ground truth data.
+
+Scope:
+
+    Implement the merge_eval_data method.
+
+    This method will take two DataFrames as input: the flattened model output and the human-coded evaluation data.
+
+    It will perform an inner merge on the unique_id column.
+
+Acceptance Criteria:
+
+    A new function exists that correctly merges the two data sources.
+
+    Unit tests are created that provide two simple DataFrames and verify that the merged output is correct.
+
+    This PR builds on Part 1 and should be submitted after Part 1 is merged.
+
+Part 3: File Processing Orchestration
+
+Goal: Create the main JsonPreprocessor class that orchestrates the process for a list of files, but in a simplified way that ignores the complex GCS scanning logic for now.
+
+Scope:
+
+    Create the JsonPreprocessor class structure.
+
+    Implement the process_files method.
+
+    For this initial version, the method will not scan GCS. Instead, it will simply accept a hardcoded list of file paths from the configuration. This allows you to test the end-to-end flow without the complexity of the file discovery logic.
+
+Acceptance Criteria:
+
+    The JsonPreprocessor class is created.
+
+    The process_files method can take a simple list of file paths, process them using the functions from Part 1 and Part 2, and return a final, combined DataFrame.
+
+    Unit tests are updated to test this orchestration logic, mocking the file reading to return predefined JSON data.
+
+    The complex GCS directory scanning logic (get_gcs_filepaths) can be added in a future ticket, once this core functionality is approved and merged.
