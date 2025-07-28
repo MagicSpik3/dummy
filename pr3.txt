@@ -1,0 +1,54 @@
+### **Title: feat: Introduce DataCleaner for evaluation preprocessing**
+
+### **Summary**
+
+This pull request introduces the first components of the SA-160 refactor: a new `DataCleaner` class and a `ColumnConfig` dataclass. Together, these provide a standardised and reusable pipeline for validating, cleaning, and preparing raw evaluation data for analysis.
+
+### **Background & Motivation**
+
+This is the first of three planned pull requests to refactor the large `LabelAccuracy` class. The original class handled too many responsibilities, including data preparation, making it difficult to test and maintain.
+
+The motivation for this specific PR is to create a dedicated, single-responsibility component (`DataCleaner`) that handles all upfront data cleaning. By separating this logic, we make the data preparation step more robust and reusable across different evaluation workflows.
+
+### **Changes Introduced**
+
+* **`configs/column_config.py`:** A new `ColumnConfig` dataclass. This provides a simple and explicit way to configure which columns the `DataCleaner` should operate on.
+
+* **`data_cleaning/data_cleaner.py`:** The new `DataCleaner` class. Its sole responsibility is to take a raw DataFrame and a `ColumnConfig` and produce a cleaned DataFrame. Its `process()` method orchestrates all the necessary steps, including:
+
+  * Validating that required columns exist.
+
+  * Optionally filtering for "Unambiguous" records.
+
+  * Cleaning and standardising label columns (e.g., padding SIC codes and handling missing values).
+
+* **`scripts/example_data_cleaner.py`:** An example runner script that demonstrates how to import and use the `DataCleaner` and `ColumnConfig` to process a file.
+
+### **How to Use**
+
+The new components are designed to be used as the first step in any analysis pipeline.
+
+```python
+# Example from scripts/example_data_cleaner.py
+
+from survey_assist_utils.configs.column_config import ColumnConfig
+from survey_assist_utils.data_cleaning.data_cleaner import DataCleaner
+import pandas as pd
+
+# 1. Define the configuration for the columns you want to clean
+config = ColumnConfig(
+    model_label_cols=[], # Add model columns if they exist in the raw data
+    model_score_cols=[],
+    clerical_label_cols=["sic_ind_occ1", "sic_ind_occ2", "sic_ind_occ3"],
+    id_col="unique_id"
+)
+
+# 2. Load your raw data
+df = pd.read_csv("path/to/your/raw_data.csv")
+
+# 3. Instantiate the cleaner and process the data
+cleaner = DataCleaner(config)
+clean_df = cleaner.process(df)
+
+# The 'clean_df' is now ready for downstream analysis
+clean_df.to_csv("cleaned_data.csv", index=False)
