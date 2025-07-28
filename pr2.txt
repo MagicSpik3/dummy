@@ -1,0 +1,67 @@
+This branch reduces the scope of SA-160 to enable more effective peer review.
+
+The specific parts included in this branch are
+Pull Request: Add Script for Cleaning and Preparing Evaluation Data
+Summary
+This PR introduces a new script that demonstrates how to use the DataCleaner pipeline to validate, clean, and standardise raw evaluation data. It also contains the ColumnConfig module to allow configuring the data pipeline.
+✨ What's Included
+
+    New script for running the full data cleaning pipeline:
+        Validates required columns using ColumnConfig.
+        Optionally filters out ambiguous records.
+        Cleans and standardises label columns (e.g., SIC codes).
+        Handles missing value formats and preserves data integrity.
+        Outputs a cleaned CSV ready for downstream analysis.
+
+🧪 Usage Example
+
+config = ColumnConfig(
+    model_label_cols=[],
+    model_score_cols=[],
+    clerical_label_cols=["sic_ind_occ1", "sic_ind_occ2", "sic_ind_occ3"],
+    id_col="unique_id"
+)
+
+df = pd.read_csv("data/evaluation_data/DSC_Rep_Sample.csv")
+cleaner = DataCleaner(config)
+clean_df = cleaner.process(df)
+clean_df.to_csv("cleaned_data.csv", index=False)
+
+    Data Cleaning
+
+📌 Pull Request Template
+
+    Please complete all sections
+
+✨ Summary
+📜 Changes Introduced
+
+Feature implementation (feat:) / bug fix (fix:) / refactoring (chore:) / documentation (docs:) / testing (test:)
+Updates to tests and/or documentation
+
+    Terraform changes (if applicable)
+
+✅ Checklist
+
+    Please confirm you've completed these checks before requesting a review.
+
+    [✅ ] Code is formatted using Black
+    [ ✅ ] Imports are sorted using isort
+    [ ✅ ] Code passes linting with Ruff, Pylint, and Mypy
+    [ ✅ ] Security checks pass using Bandit
+    [ NA] API and Unit tests are written and pass using pytest
+    [ NA] Terraform files (if applicable) follow best practices and have been validated (terraform fmt & terraform validate)
+    [ ✅ ] DocStrings follow Google-style and are added as per Pylint recommendations
+
+    Documentation has been updated if needed
+
+🔍 How to Test
+
+A runner script has been provided.
+
+python scripts/example_data_cleaner.py
+
+
+
+
+Note: Unit tests for these new components will be introduced in the next PR of this series.
