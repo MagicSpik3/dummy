@@ -1,0 +1,31 @@
+# This file defines the different scenarios to be run by the evaluation script.
+
+[[evaluation_cases]]
+Title = "Match of top CC vs top SA on unambiguously Codable"
+CCs = [1]
+LLMs = [1]
+Unambiguous = true
+
+[[evaluation_cases]]
+Title = "Match of top CC vs any SA on unambiguously codable"
+CCs = [1]
+LLMs = [5]
+Unambiguous = true
+
+[[evaluation_cases]]
+Title = "Match rate top CC vs any SA on all data"
+CCs = [1]
+LLMs = [5]
+Unambiguous = false
+
+[[evaluation_cases]]
+Title = "Match rate any CC vs any SA on all data"
+CCs = [3]
+LLMs = [5]
+Unambiguous = false
+
+[[evaluation_cases]]
+Title = "Jaccard's Score all CC vs all SA, all data"
+CCs = [3]
+LLMs = [5]
+Unambiguous = false
