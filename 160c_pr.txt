@@ -1,0 +1,61 @@
+Title: feat: Add local script for processing and merging model outputs
+Summary
+
+This pull request introduces a focused, command-line script (process_local_run.py) and its helper classes (JsonProcessor, FlagGenerator) to handle the local processing of a single model run's JSON output. This script orchestrates the entire workflow, from adding quality flags to the ground truth data to merging it with the flattened model results.
+Background & Motivation
+
+As part of the plan to break down the large SA-160 ticket, this PR addresses the core requirement of processing a model's output in a simple, repeatable way. The previous runner script was too complex for a single review, involving GCS file scanning and a large configuration file.
+
+This new script has a greatly reduced scope. It operates exclusively on local files and is driven by simple command-line arguments, making it easy for a developer to test, review, and use for local analysis without the overhead of the full GCS-integrated pipeline.
+Changes Introduced
+
+    processing/json_processor.py: A new, lightweight JsonProcessor class. Its sole responsibility is to load a local JSON file and flatten it into a pandas DataFrame.
+
+    processing/flag_generator.py: A new FlagGenerator class that encapsulates the logic from the old prepare_evaluation_data_for_analysis.py script. Its only job is to take the raw ground truth DataFrame and add the necessary data quality flag columns (e.g., Unambiguous, Match_5_digits).
+
+    scripts/process_local_run.py: A new runner script that orchestrates the entire process. It uses the other two components to:
+
+        Load the raw ground truth data.
+
+        Add the quality flags using the FlagGenerator.
+
+        Load and flatten the model's raw JSON output using the JsonProcessor.
+
+        Merge the two datasets.
+
+        Add the final derived columns needed for analysis (e.g., is_correct).
+
+        Save the final, processed DataFrame to a local CSV file.
+
+How to Use
+
+The new script is designed to be run from the command line. It takes the path to the model's JSON output as a required argument, with optional arguments for the input and output data paths.
+
+Example Command:
+
+python scripts/process_local_run.py path/to/your/model_output.json \
+  --raw_data path/to/your/ground_truth.csv \
+  --output path/to/save/final_data.csv
+
+How to Test
+
+This PR includes the new script and its components. It can be tested by running it manually with local data files.
+
+Note: Unit tests for these new components will be introduced in the next PR of this series.
+✅ Checklist
+
+Please confirm you've completed these checks before requesting a review.
+
+    [✅] Code is formatted using Black
+
+    [✅] Imports are sorted using isort
+
+    [✅] Code passes linting with Ruff, Pylint, and Mypy
+
+    [✅] Security checks pass using Bandit
+
+    [ ] API and Unit tests are written and pass using pytest (deferred to next PR)
+
+    [✅] DocStrings follow Google-style and are added as per Pylint recommendations
+
+    [✅] Documentation has been updated if needed
