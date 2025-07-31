@@ -1,0 +1,50 @@
+Here is a pull request description for the provided script.
+
+-----
+
+### **Title: feat: Add configuration-driven evaluation runner script**
+
+### **Description**
+
+This pull request introduces a new, flexible **evaluation runner script** (`metrics_runner.py`) for the Survey Assist project. This script allows for running multiple, distinct evaluation scenarios that are defined in an external **TOML configuration file**, making performance analysis more efficient, repeatable, and easier to modify.
+
+The runner iterates through each case defined in the config, dynamically setting up the comparison between model predictions and clerical coder labels (e.g., top 1 vs. top 1, top 1 vs. any of top 5, etc.). It then calculates and prints a clear, formatted report for each scenario, including full match accuracy, 2-digit accuracy, and the Jaccard similarity index.
+
+This approach replaces hard-coded evaluation logic with a configuration-driven system, which is a significant improvement for ongoing model assessment and experimentation.
+
+-----
+
+### **Key Changes**
+
+  * **✨ New Script (`metrics_runner.py`):** A command-line tool that orchestrates the entire evaluation process. It handles loading data, parsing the configuration, and printing results.
+  * **⚙️ TOML Configuration (`evaluation_config.toml`):** Introduces a new configuration file where users can easily define or modify evaluation cases. Each case can specify:
+      * The number of model predictions (`LLMs`) to consider.
+      * The number of clerical codes (`CCs`) to compare against.
+      * Whether to filter for only `Unambiguous` records.
+  * **🧠 Dynamic Evaluation Logic:** The script dynamically creates a `ColumnConfig` for each case based on the TOML file, ensuring the `LabelAccuracy` analyzer receives the correct parameters for its calculations.
+
+-----
+
+### **How to Test**
+
+1.  Place the provided `evaluation_config.toml` in a `configs/` directory.
+
+2.  Ensure you have a processed data file (e.g., in `data/`).
+
+3.  Run the script from your terminal with the paths to your data and config files:
+
+    ```bash
+    python metrics_runner.py data/final_processed_output.csv configs/evaluation_config.toml
+    ```
+
+4.  **Verify the Output**:
+
+      * Check that a formatted report is printed for each of the evaluation cases defined in the TOML file.
+      * Confirm that the logs correctly state the parameters for each case (e.g., "Running Case 1: Match of top CC vs top SA...").
+      * Ensure the accuracy and Jaccard metrics are calculated and displayed for each case.
+
+-----
+
+### **Related Ticket**
+
+PROJ-1234
